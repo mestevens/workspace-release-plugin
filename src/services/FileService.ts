@@ -46,11 +46,18 @@ export class FileService {
         const zip: Archiver = archiver('zip');
         zip.pipe(output);
         zip.directory(src, false);
-        zip.finalize();
+        return zip.finalize();
     }
 
     public writePackage(path: PathLike, pkg: Package) {
-        writeFileSync(path, JSON.stringify(pkg, null, 2));
+        writeFileSync(path, JSON.stringify(pkg, this.jsonReplacer, 2));
+    }
+
+    private jsonReplacer(key: string, value: unknown): unknown {
+        if (key === 'packagePath') {
+            return undefined;
+        }
+        return value;
     }
 
 }

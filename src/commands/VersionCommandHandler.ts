@@ -2,7 +2,6 @@ import { ICommandHandler } from "./ICommandHandler";
 import { VersionCommand } from "../models/VersionCommand";
 import { WorkspaceService } from "../services/WorkspaceService";
 import { Package } from "../models/Package";
-import { DependencyService } from "../services/DependencyService";
 import { PackageJsonService } from "../services/PackageJsonService";
 import { injectable, inject } from "inversify";
 import { FileService } from "../services/FileService";
@@ -11,7 +10,6 @@ import { FileService } from "../services/FileService";
 export class VersionCommandHandler implements ICommandHandler {
 
     public constructor(
-        @inject(DependencyService.name) private readonly dependencyService: DependencyService,
         @inject(FileService.name) private readonly fileService: FileService,
         @inject(PackageJsonService.name) private readonly packageJsonService: PackageJsonService,
         @inject(WorkspaceService.name) private readonly workspaceService: WorkspaceService
@@ -28,14 +26,12 @@ export class VersionCommandHandler implements ICommandHandler {
         }
 
         // Get package.json info
-        const packageJsonPaths: string[] = this.workspaceService.getPackageJsons(workspacePackage);
-        const packageNames: string[] = this.workspaceService.getPackageNames(packageJsonPaths);
+        const pkgJsons: Package[] = this.workspaceService.getPackageJsons(workspacePackage);
 
         // Update package.json versions
-        for (const packageJsonPath of packageJsonPaths) {
-            const json: Package = this.packageJsonService.getPackageJson(packageJsonPath);
-            const updatedPackageJson: Package = this.dependencyService.updateVersions(json, packageNames, command.version);
-            this.fileService.writePackage(packageJsonPath, updatedPackageJson);
+        for (const pkg of pkgJsons) {
+            const updatedPackageJson: Package = this.packageJsonService.updateVersions(pkg, pkgJsons, command.version);
+            this.fileService.writePackage(pkg.packagePath, updatedPackageJson);
         }
     }
 

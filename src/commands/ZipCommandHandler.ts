@@ -36,8 +36,7 @@ export class ZipCommandHandler implements ICommandHandler {
         this.fileService.createFolder(destinationFolder);
 
         // Copy workspace level node_modules (do this first)
-        const workspacePackagePath: string = this.workspaceService.validateAndReturnWorkspacePath(command.workspace);
-        const workspaceFolder: string = path.dirname(workspacePackagePath);
+        const workspaceFolder: string = path.dirname(workspacePackage.packagePath);
         const workspaceNodeModules: string = path.join(workspaceFolder, 'node_modules');
         console.log(`Copying workspace node_modules`);
         if (this.fileService.exists(workspaceNodeModules)) {
@@ -45,14 +44,13 @@ export class ZipCommandHandler implements ICommandHandler {
         }
 
         // Remove workspace symlinks
-        const symlinks: string[] = this.workspaceService.getPackageNames(this.workspaceService.getPackageJsons(workspacePackage));
-        for (const symlink of symlinks) {
-            this.fileService.unlink(path.join(destinationFolder, 'node_modules', symlink));
+        const workspacePackages: Package[] = this.workspaceService.getPackageJsons(workspacePackage);
+        for (const symlink of workspacePackages) {
+            this.fileService.unlink(path.join(destinationFolder, 'node_modules', symlink.name));
         }
 
         // Get package and move to directory
-        const zipPackagePath: string = this.workspaceService.getPackagePathFromName(command.packageName, workspacePackage);
-        const zipPackage: Package = this.packageJsonService.getPackageJson(zipPackagePath);
+        const zipPackage: Package = this.workspaceService.getPackageFromName(command.packageName, workspacePackage);
         this.copyFiles(command.packageName, destinationFolder, nodeModulesFolder, workspacePackage);
 
         // Gather dependencies and copy to node_modules
@@ -83,9 +81,8 @@ export class ZipCommandHandler implements ICommandHandler {
         console.log(`Copying package ${packageName} and dependencies`);
 
         // Get directory and Package to zip
-        const zipPackagePath: string = this.workspaceService.getPackagePathFromName(packageName, workspacePackage);
-        const projectDirectory: string = path.dirname(zipPackagePath);
-        const zipPackage: Package = this.packageJsonService.getPackageJson(zipPackagePath);
+        const zipPackage: Package = this.workspaceService.getPackageFromName(packageName, workspacePackage);
+        const projectDirectory: string = path.dirname(zipPackage.packagePath);
 
         // Copy files
         const files: string[] = zipPackage.files || [];
@@ -100,7 +97,7 @@ export class ZipCommandHandler implements ICommandHandler {
         }
 
         // Copy package.json
-        this.fileService.copy(zipPackagePath, path.join(destinationFolder, 'package.json'));
+        this.fileService.copy(zipPackage.packagePath, path.join(destinationFolder, 'package.json'));
     }
 
 }

@@ -4,4 +4,5 @@ export interface Package {
     workspaces?: string[];
     dependencies?: Record<string, string>;
     files?: string[];
+    packagePath: string;
 }

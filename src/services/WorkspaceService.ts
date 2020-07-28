@@ -19,41 +19,36 @@ export class WorkspaceService {
         return this.packageJsonService.getPackageJson(packageJsonString);
     }
 
-    public getPackageJsons(packageJson: Package): string[] {
+    public getPackageJsons(packageJson: Package): Package[] {
         const packageJsonPaths: string[] = [];
+        const rootDirectory: string = path.dirname(packageJson.packagePath);
         for (const workspace of packageJson.workspaces || []) {
-            const packages: string[] = this.packageJsonService.findPackageJson(workspace);
+            const packages: string[] = this.packageJsonService.findPackageJson(rootDirectory, workspace);
             for (const workspacePackageJson of packages) {
                 packageJsonPaths.push(workspacePackageJson);
             }
         }
-        return packageJsonPaths;
+        return packageJsonPaths.map((path) => this.packageJsonService.getPackageJson(path));;
     }
 
     public getPackageNames(packageJsonPaths: string[]): string[] {
         return packageJsonPaths.map((path) => this.packageJsonService.findPackageName(path));
     }
 
-    public getPackagePathFromName(packageName: string, workspacePackage: Package): string {
-        const paths: string[] = this.getPackageJsons(workspacePackage);
-        for (const path of paths) {
-            const json: Package = this.packageJsonService.getPackageJson(path);
-            if (json.name === packageName) {
-                return path;
+    public getPackageFromName(packageName: string, workspacePackage: Package): Package {
+        const pkgs: Package[] = this.getPackageJsons(workspacePackage);
+        for (const pkg of pkgs) {
+            if (pkg.name === packageName) {
+                return pkg;
             }
         }
         throw new Error(`Could not find package named ${packageName} in workspace.`);
     }
 
-    public getPackageFromName(packageName: string, workspacePackage: Package): Package {
-        const packagePath: string = this.getPackagePathFromName(packageName, workspacePackage);
-        return this.packageJsonService.getPackageJson(packagePath);
-    }
-
     public getWorkspaceDependencies(workspacePackage: Package, projectPackage: Package): string[] {
         // Get package.json info
-        const packageJsonPaths: string[] = this.getPackageJsons(workspacePackage);
-        const packageNames: string[] = this.getPackageNames(packageJsonPaths);
+        const pkgs: Package[] = this.getPackageJsons(workspacePackage);
+        const packageNames: string[] = pkgs.map((p) => p.name);
 
         // Get workspace dependencies
         let dependencies: Set<string> = new Set<string>();

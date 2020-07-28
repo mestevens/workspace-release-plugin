@@ -1,6 +1,5 @@
 import { Container as InversifyContainer } from 'inversify';
 import { ArgumentService } from '../services/ArgumentService';
-import { DependencyService } from '../services/DependencyService';
 import { FileService } from '../services/FileService';
 import { PackageJsonService } from '../services/PackageJsonService';
 import { WorkspaceService } from '../services/WorkspaceService';
@@ -15,9 +14,6 @@ export class Container extends InversifyContainer {
         // Services
         this.bind<ArgumentService>(ArgumentService.name)
             .to(ArgumentService)
-            .inSingletonScope();
-        this.bind<DependencyService>(DependencyService.name)
-            .to(DependencyService)
             .inSingletonScope();
         this.bind<FileService>(FileService.name)
             .to(FileService)
