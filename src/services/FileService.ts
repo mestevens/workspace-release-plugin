@@ -9,7 +9,8 @@ import {
     lstatSync,
     createWriteStream,
     WriteStream,
-    writeFileSync
+    writeFileSync,
+    readJSONSync
 } from "fs-extra";
 import { injectable } from "inversify";
 import archiver, { Archiver } from "archiver";
@@ -65,6 +66,10 @@ export class FileService {
             return undefined;
         }
         return value;
+    }
+
+    public readPackage(path: string): Package {
+        return readJSONSync(path);
     }
 
 }

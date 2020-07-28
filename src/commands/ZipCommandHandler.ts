@@ -17,51 +17,55 @@ export class ZipCommandHandler implements ICommandHandler {
     ) {}
 
     public async execute(command: ZipCommand): Promise<void> {
-        // Get and validate the workspace package
-        const workspacePackage: Package = this.packageJsonService.getPackageJson(command.workspace);
-        this.workspaceService.validateWorkspacePackage(workspacePackage);
-
-        // Make dest folder
         const destinationFolder: string = path.resolve(command.destFolder);
-        console.log(`Creating temporary folder ${destinationFolder}`);
-        const nodeModulesFolder: string = path.join(destinationFolder, 'node_modules');
-        this.fileService.createFolder(destinationFolder, true);
+        try {
+            // Get and validate the workspace package
+            const workspacePackage: Package = this.packageJsonService.getPackageJson(command.workspace);
+            this.workspaceService.validateWorkspacePackage(workspacePackage);
 
-        // Copy workspace level node_modules (do this first)
-        const workspaceFolder: string = path.dirname(workspacePackage.packagePath);
-        const workspaceNodeModules: string = path.join(workspaceFolder, 'node_modules');
-        console.log(`Copying workspace node_modules`);
-        this.fileService.copy(workspaceNodeModules, nodeModulesFolder);
+            // Make dest folder
+            console.log(`Creating temporary folder ${destinationFolder}`);
+            const nodeModulesFolder: string = path.join(destinationFolder, 'node_modules');
+            this.fileService.createFolder(destinationFolder, true);
 
-        // Remove workspace symlinks
-        const workspacePackages: Package[] = this.workspaceService.getPackageJsons(workspacePackage);
-        for (const symlink of workspacePackages) {
-            this.fileService.unlink(path.join(destinationFolder, 'node_modules', symlink.name));
+            // Copy workspace level node_modules (do this first)
+            const workspaceFolder: string = path.dirname(workspacePackage.packagePath);
+            const workspaceNodeModules: string = path.join(workspaceFolder, 'node_modules');
+            console.log(`Copying workspace node_modules`);
+            this.fileService.copy(workspaceNodeModules, nodeModulesFolder);
+
+            // Remove workspace symlinks
+            const workspacePackages: Package[] = this.workspaceService.getPackageJsons(workspacePackage);
+            for (const symlink of workspacePackages) {
+                this.fileService.unlink(path.join(destinationFolder, 'node_modules', symlink.name));
+            }
+
+            // Get package and move to directory
+            const zipPackage: Package = this.workspaceService.getPackageFromName(command.packageName, workspacePackage);
+            this.copyFiles(command.packageName, destinationFolder, nodeModulesFolder, workspacePackage);
+
+            // Gather dependencies and copy to node_modules
+            const dependencies: string[] = this.workspaceService.getWorkspaceDependencies(workspacePackage, zipPackage);
+            for (const dependency of dependencies) {
+                this.copyFiles(dependency, path.join(destinationFolder, 'node_modules', dependency), nodeModulesFolder, workspacePackage);
+            }
+
+            // Remove self from node_modules (don't want to include this as a package)
+            console.log(`Removing self from dependencies`)
+            const selfDependency: string = path.join(nodeModulesFolder, 'workspace-release-plugin');
+            this.fileService.remove(selfDependency);
+
+            // Zip
+            const zipFile: string = path.join('./', `${zipPackage.name}-${zipPackage.version}.zip`);
+            console.log(`Zipping to ${zipFile}`);
+            await this.fileService.zip(destinationFolder, path.join('./', zipFile));
+        } catch(ex) {
+            throw ex;
+        } finally {
+            // Clean
+            console.log(`Cleaning up temporary folder`);
+            this.fileService.remove(destinationFolder);
         }
-
-        // Get package and move to directory
-        const zipPackage: Package = this.workspaceService.getPackageFromName(command.packageName, workspacePackage);
-        this.copyFiles(command.packageName, destinationFolder, nodeModulesFolder, workspacePackage);
-
-        // Gather dependencies and copy to node_modules
-        const dependencies: string[] = this.workspaceService.getWorkspaceDependencies(workspacePackage, zipPackage);
-        for (const dependency of dependencies) {
-            this.copyFiles(dependency, path.join(destinationFolder, 'node_modules', dependency), nodeModulesFolder, workspacePackage);
-        }
-
-        // Remove self from node_modules (don't want to include this as a package)
-        console.log(`Removing self from dependencies`)
-        const selfDependency: string = path.join(nodeModulesFolder, 'workspace-release-plugin');
-        this.fileService.remove(selfDependency);
-
-        // Zip
-        const zipFile: string = path.join('./', `${zipPackage.name}-${zipPackage.version}.zip`);
-        console.log(`Zipping to ${zipFile}`);
-        await this.fileService.zip(destinationFolder, path.join('./', zipFile));
-
-        // Clean
-        console.log(`Cleaning up temporary folder`);
-        this.fileService.remove(destinationFolder);
     }
 
     private copyFiles(packageName: string, destinationFolder: string, nodeModulesDestination: string, workspacePackage: Package) {

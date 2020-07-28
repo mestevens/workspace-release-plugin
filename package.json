@@ -1,10 +1,11 @@
 {
   "name": "workspace-release-plugin",
   "version": "1.0.0",
-  "main": "lib/App.js",
+  "main": "lib/cli.js",
   "license": "MIT",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "postbuild": "chmod +x lib/cli.js"
   },
   "dependencies": {
     "archiver": "^5.0.0",
@@ -24,5 +25,7 @@
   "files": [
     "lib"
   ],
-  "bin": "lib/App.js"
+  "bin": {
+    "workspace-release-plugin": "lib/cli.js"
+  }
 }

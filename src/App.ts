@@ -1,14 +1,12 @@
-import "reflect-metadata";
 import { ArgumentService } from "./services/ArgumentService";
 import { ICommandHandler } from "./commands/ICommandHandler";
 import { VersionCommandHandler } from "./commands/VersionCommandHandler";
 import { ICommand } from "./models/ICommand";
 import { ZipCommandHandler } from "./commands/ZipCommandHandler";
 import { inject, injectable } from "inversify";
-import { Container } from './inversify/Container';
 
 @injectable()
-class App {
+export class App {
 
     private readonly commandMap: Map<string, ICommandHandler>;
 
@@ -35,11 +33,3 @@ class App {
     }
 
 }
-
-// Set up container
-const container: Container = new Container();
-container.bind<App>(App.name).to(App).inSingletonScope();
-
-// Get and run app
-const app: App = container.get<App>(App.name);
-app.run();

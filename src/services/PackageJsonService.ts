@@ -1,13 +1,18 @@
 import { glob } from "glob";
 import { Package } from "../models/Package";
-import { injectable } from "inversify";
+import { injectable, inject } from "inversify";
+import { FileService } from "./FileService";
 
 @injectable()
 export class PackageJsonService {
 
+    public constructor(
+        @inject(FileService.name) private readonly fileService: FileService
+    ) {}
+
     public findPackageJson(rootDirectory: string, workspace: string): string[] {
         return glob.sync(`${rootDirectory}/${workspace}/package.json`, {
-            ignore: '**/node_modules/**/package.json'
+            ignore: `${rootDirectory}/${workspace}/**/node_modules/**/package.json`
         });
     }
 
@@ -18,7 +23,7 @@ export class PackageJsonService {
 
     public getPackageJson(packageJson: string): Package {
         // Get the package and add the path to it
-        const pkg: Package = require(packageJson);
+        const pkg: Package = this.fileService.readPackage(packageJson);
         pkg.packagePath = packageJson;
         return pkg;
     }
