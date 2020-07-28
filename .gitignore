@@ -1,0 +1,5 @@
+node_modules/
+lib/
+
+# This is just for now. Will need to actually create a test repo
+test-repo/
