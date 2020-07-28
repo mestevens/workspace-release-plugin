@@ -8,10 +8,12 @@ import {
     unlinkSync,
     lstatSync,
     createWriteStream,
-    WriteStream
+    WriteStream,
+    writeFileSync
 } from "fs-extra";
 import { injectable } from "inversify";
 import archiver, { Archiver } from "archiver";
+import { Package } from "../models/Package";
 
 @injectable()
 export class FileService {
@@ -45,6 +47,10 @@ export class FileService {
         zip.pipe(output);
         zip.directory(src, false);
         zip.finalize();
+    }
+
+    public writePackage(path: PathLike, pkg: Package) {
+        writeFileSync(path, JSON.stringify(pkg, null, 2));
     }
 
 }

@@ -5,12 +5,14 @@ import { Package } from "../models/Package";
 import { DependencyService } from "../services/DependencyService";
 import { PackageJsonService } from "../services/PackageJsonService";
 import { injectable, inject } from "inversify";
+import { FileService } from "../services/FileService";
 
 @injectable()
 export class VersionCommandHandler implements ICommandHandler {
 
     public constructor(
         @inject(DependencyService.name) private readonly dependencyService: DependencyService,
+        @inject(FileService.name) private readonly fileService: FileService,
         @inject(PackageJsonService.name) private readonly packageJsonService: PackageJsonService,
         @inject(WorkspaceService.name) private readonly workspaceService: WorkspaceService
     ) {}
@@ -33,9 +35,7 @@ export class VersionCommandHandler implements ICommandHandler {
         for (const packageJsonPath of packageJsonPaths) {
             const json: Package = this.packageJsonService.getPackageJson(packageJsonPath);
             const updatedPackageJson: Package = this.dependencyService.updateVersions(json, packageNames, command.version);
-
-            // TODO write
-            console.log(updatedPackageJson);
+            this.fileService.writePackage(packageJsonPath, updatedPackageJson);
         }
     }
 
