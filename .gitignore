@@ -2,5 +2,7 @@ node_modules/
 lib/
 bin/
 
+yarn-error.log
+
 # This is just for now. Will need to actually create a test repo
 test-repo/
