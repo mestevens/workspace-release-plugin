@@ -58,7 +58,7 @@ export class ArgumentService {
                 required: true
             });
         zip.addArgument(
-            [],
+            [ '-t', '--t', '-temp', '--temp' ],
             {
                 action: 'store',
                 defaultValue: './dest',
