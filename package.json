@@ -27,5 +27,8 @@
   ],
   "bin": {
     "workspace-release-plugin": "lib/cli.js"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   }
 }
