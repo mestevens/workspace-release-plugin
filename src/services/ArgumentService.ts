@@ -5,12 +5,19 @@ import { injectable } from "inversify";
 @injectable()
 export class ArgumentService {
 
+    private static readonly HELP_TEXT: Map<string, string> = new Map<string, string>([
+        ['workspace', 'The .json file containing the workspace information. Defaults to ./package.json'],
+        ['version', 'The version to set the workspace to'],
+        ['packageName', 'The package to zip'],
+        ['destFolder', 'The temporary folder where all the operations for zipping are done']
+    ]);
+
     public parseArguments(): ICommand {
         // Argument Parser
         const argumentParser: ArgumentParser = new ArgumentParser({
             version: '1.0.0',
             addHelp: true,
-            description: 'Description',
+            description: 'A plugin to help deal with versioning and packaging yarn workspaces.',
         });
 
         // Sub parser
@@ -27,14 +34,14 @@ export class ArgumentService {
                 action: 'store',
                 defaultValue: './package.json',
                 dest: 'workspace',
-                help: 'The .json file containing the workspace information. Defaults to ./package.json'
+                help: ArgumentService.HELP_TEXT.get('workspace')
             });
         version.addArgument(
             [ '-v', '--v', '-version', '--version' ],
             {
                 action: 'store',
                 dest: 'version',
-                help: 'The version to set the workspace to.',
+                help: ArgumentService.HELP_TEXT.get('version'),
                 required: true
             }
         )
@@ -47,14 +54,14 @@ export class ArgumentService {
                 action: 'store',
                 defaultValue: './package.json',
                 dest: 'workspace',
-                help: ''
+                help: ArgumentService.HELP_TEXT.get('workspace')
             });
         zip.addArgument(
             [ '-p', '--p', '-packageName', '--packageName' ],
             {
                 action: 'store',
                 dest: 'packageName',
-                help: '',
+                help: ArgumentService.HELP_TEXT.get('packageName'),
                 required: true
             });
         zip.addArgument(
@@ -63,7 +70,7 @@ export class ArgumentService {
                 action: 'store',
                 defaultValue: './dest',
                 dest: 'destFolder',
-                help: ''
+                help: ArgumentService.HELP_TEXT.get('destFolder')
             }
         )
 

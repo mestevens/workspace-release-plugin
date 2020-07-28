@@ -10,13 +10,12 @@ export class WorkspaceService {
         @inject(PackageJsonService.name) private readonly packageJsonService: PackageJsonService
     ) {}
 
-    public validateAndReturnWorkspacePath(packageJsonPath: string): string {
-        return path.resolve(packageJsonPath);
-    }
-
-    public validateAndReturnWorkspacePackage(packageJsonPath: string): Package {
-        const packageJsonString: string = this.validateAndReturnWorkspacePath(packageJsonPath);
-        return this.packageJsonService.getPackageJson(packageJsonString);
+    public validateWorkspacePackage(workspacePackage: Package): void {
+        // If no workspaces just exit
+        if (!workspacePackage.workspaces) {
+            console.warn(`No workspaces found.`);
+            process.exit();
+        }
     }
 
     public getPackageJsons(packageJson: Package): Package[] {

@@ -18,8 +18,11 @@ import { Package } from "../models/Package";
 @injectable()
 export class FileService {
 
-    public createFolder(folder: string): void {
+    public createFolder(folder: string, deleteIfExists?: boolean): void {
         const folderPath: string = path.resolve(folder);
+        if (deleteIfExists) {
+            this.remove(folder);
+        }
         mkdirSync(folderPath);
     }
 
@@ -28,11 +31,15 @@ export class FileService {
     }
 
     public copy(src: string, dest: string): void {
-        copySync(src, dest, {overwrite: true});
+        if (this.exists(src)) {
+            copySync(src, dest, {overwrite: true});
+        }
     }
 
     public remove(dir: string): void {
-        removeSync(dir);
+        if (this.exists(dir)) {
+            removeSync(dir);
+        }
     }
 
     public unlink(path: PathLike): void {

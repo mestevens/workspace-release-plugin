@@ -16,14 +16,9 @@ export class VersionCommandHandler implements ICommandHandler {
     ) {}
 
     public execute(command: VersionCommand): void {
-        // Get the workspace package
-        const workspacePackage: Package = this.workspaceService.validateAndReturnWorkspacePackage(command.workspace);
-        
-        // If no workspaces just exit
-        if (!workspacePackage.workspaces) {
-            console.warn(`No workspaces found.`);
-            process.exit();
-        }
+        // Get and validate the workspace package
+        const workspacePackage: Package = this.packageJsonService.getPackageJson(command.workspace);
+        this.workspaceService.validateWorkspacePackage(workspacePackage);
 
         // Get package.json info
         const pkgJsons: Package[] = this.workspaceService.getPackageJsons(workspacePackage);

@@ -17,31 +17,21 @@ export class ZipCommandHandler implements ICommandHandler {
     ) {}
 
     public async execute(command: ZipCommand): Promise<void> {
-        // Get the workspace package
-        const workspacePackage: Package = this.workspaceService.validateAndReturnWorkspacePackage(command.workspace);
-
-        // If no workspaces just exit
-        if (!workspacePackage.workspaces) {
-            console.warn(`No workspaces found.`);
-            process.exit();
-        }
+        // Get and validate the workspace package
+        const workspacePackage: Package = this.packageJsonService.getPackageJson(command.workspace);
+        this.workspaceService.validateWorkspacePackage(workspacePackage);
 
         // Make dest folder
         const destinationFolder: string = path.resolve(command.destFolder);
         console.log(`Creating temporary folder ${destinationFolder}`);
-        if (this.fileService.exists(destinationFolder)) {
-            this.fileService.remove(destinationFolder);
-        }
         const nodeModulesFolder: string = path.join(destinationFolder, 'node_modules');
-        this.fileService.createFolder(destinationFolder);
+        this.fileService.createFolder(destinationFolder, true);
 
         // Copy workspace level node_modules (do this first)
         const workspaceFolder: string = path.dirname(workspacePackage.packagePath);
         const workspaceNodeModules: string = path.join(workspaceFolder, 'node_modules');
         console.log(`Copying workspace node_modules`);
-        if (this.fileService.exists(workspaceNodeModules)) {
-            this.fileService.copy(workspaceNodeModules, nodeModulesFolder);
-        }
+        this.fileService.copy(workspaceNodeModules, nodeModulesFolder);
 
         // Remove workspace symlinks
         const workspacePackages: Package[] = this.workspaceService.getPackageJsons(workspacePackage);
@@ -62,19 +52,16 @@ export class ZipCommandHandler implements ICommandHandler {
         // Remove self from node_modules (don't want to include this as a package)
         console.log(`Removing self from dependencies`)
         const selfDependency: string = path.join(nodeModulesFolder, 'workspace-release-plugin');
-        if (this.fileService.exists(selfDependency)) {
-            this.fileService.remove(selfDependency);
-        }
+        this.fileService.remove(selfDependency);
 
         // Zip
         const zipFile: string = path.join('./', `${zipPackage.name}-${zipPackage.version}.zip`);
         console.log(`Zipping to ${zipFile}`);
         await this.fileService.zip(destinationFolder, path.join('./', zipFile));
 
+        // Clean
         console.log(`Cleaning up temporary folder`);
-        if (this.fileService.exists(destinationFolder)) {
-            this.fileService.remove(destinationFolder);
-        }
+        this.fileService.remove(destinationFolder);
     }
 
     private copyFiles(packageName: string, destinationFolder: string, nodeModulesDestination: string, workspacePackage: Package) {
@@ -92,9 +79,7 @@ export class ZipCommandHandler implements ICommandHandler {
 
         // Copy node_modules
         const nodeModulesPath: string = path.join(projectDirectory, 'node_modules');
-        if (this.fileService.exists(nodeModulesPath)) {
-            this.fileService.copy(nodeModulesPath, nodeModulesDestination);
-        }
+        this.fileService.copy(nodeModulesPath, nodeModulesDestination);
 
         // Copy package.json
         this.fileService.copy(zipPackage.packagePath, path.join(destinationFolder, 'package.json'));
