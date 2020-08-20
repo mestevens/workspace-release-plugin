@@ -37,6 +37,13 @@ export class PackageJsonService {
                 }
             }
         }
+        if (packageJson.devDependencies) {
+            for (const workspacePackage of workspacePackages) {
+                if (packageJson.devDependencies[workspacePackage.name]) {
+                    packageJson.devDependencies[workspacePackage.name] = version;
+                }
+            }
+        }
         return packageJson;
     }
 
